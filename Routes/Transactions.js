@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const pg = require('../DB');
 const { v4 } = require('uuid');
-const { checkTokenAdmin } = require('./CheckToken');
+const { checkTokenAdmin } = require('../Middleware/CheckToken');
 
 router.get("/", checkTokenAdmin, (req, res) => {
 	const getAllTransactions = "SELECt * FROM transactions";

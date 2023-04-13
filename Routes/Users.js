@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const pg = require('../DB');
+const { checkTokenAdmin } = require('../Middleware/CheckToken');
 const { UserSchema } = require('../Schema');
 const CryptoJS = require('crypto-js');
 const { v4 } = require('uuid');
@@ -16,7 +17,7 @@ const validate = (schema) => async (req, res, next) => {
 }
 
 // retrieve users
-router.get("/", async (_req, res) => {
+router.get("/", checkTokenAdmin, async (_req, res) => {
 	const query = "SELECT * FROM users";
 	try {
 		pg.query(query, (err, result) => {
@@ -46,12 +47,11 @@ router.post("/new-user", validate(UserSchema), async (req, res) => {
 });
 
 // update user
-router.put("/update/:id", async (req, res) => {
+router.put("/update/:id", checkTokenAdmin, async (req, res) => {
 	const { id } = req.params;
 	const { name, email, is_cashier, is_active, is_admin } = req.body;
-	// console.log(roles);
 	const query = `UPDATE users SET name = $1, email = $2, is_cashier = $3, is_active = $4, is_admin = $5, modified_at = NOW()::TIMESTAMP WHERE user_id = $6`;
-	// console.log(query);
+
 	try {
 		pg.query(query, [name, email, is_cashier, is_active, is_admin, id], (err, result) => {
 			err ? res.status(400).json({ responseCode: 0, message: "Error updating user", data: err })
@@ -64,7 +64,7 @@ router.put("/update/:id", async (req, res) => {
 });
 
 // delete user
-router.delete("/delete/:id", async (req, res) => {
+router.delete("/delete/:id", checkTokenAdmin, async (req, res) => {
 	const { id } = req.params;
 	const query = "DELETE FROM users WHERE user_id = $1";
 	try {

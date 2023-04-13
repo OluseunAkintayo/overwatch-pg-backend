@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const pg = require("../DB");
 const { v4 } = require('uuid');
-const { checkTokenAdmin } = require('./CheckToken');
+const { checkTokenAdmin, checkToken } = require('../Middleware/CheckToken');
 
 const now = new Date().toISOString();
 
@@ -38,9 +38,8 @@ router.post("/", checkTokenAdmin, async (req, res) => {
 	}
 });
 
-
 // get all products
-router.get("/", async (req, res) => {
+router.get("/", checkToken, async (req, res) => {
 	const query = "SELECT * FROM products";
 	try {
 		pg.query(query, (err, result) => {
@@ -53,9 +52,8 @@ router.get("/", async (req, res) => {
 	}
 });
 
-
 // get single product
-router.get("/item/:id", async (req, res) => {
+router.get("/item/:id", checkToken, async (req, res) => {
 	const { id } = req.params;
 	const query = "SELECT * FROM products WHERE product_id = $1";
 	try {
@@ -69,9 +67,8 @@ router.get("/item/:id", async (req, res) => {
 	}
 });
 
-
 // edit product
-router.put("/update/:id", async (req, res) => {
+router.put("/update/:id", checkTokenAdmin, async (req, res) => {
 	const { id } = req.params;
 	const { name, cost, price, department_id, brand_id, is_active, in_stock } = req.body;
 	const query = "UPDATE products SET name = $1, cost = $2, price = $3, department_id = $4, brand_id = $5, is_active = $6, in_stock = $7, modified_at = NOW()::TIMESTAMP WHERE product_id = $8 RETURNING *";
@@ -90,9 +87,8 @@ router.put("/update/:id", async (req, res) => {
 	}
 });
 
-
 // get all product brands
-router.get("/brands", async (req, res) => {
+router.get("/brands", checkToken, async (req, res) => {
 	const query = "SELECT brand_id, description, marked_for_deletion, username AS created_by, brands.created_at, brands.modified_at FROM brands LEFT JOIN users ON users.user_id = brands.created_by ORDER BY brands.description ASC";
 	try {
 		pg.query(query, (err, result) => {
@@ -182,6 +178,5 @@ router.put("/department/delete/:id", checkTokenAdmin, async(req, res) => {
 			: res.status(200).json({ responseCode: 1, message: "Product class deleted successfully", data: result.rows[0] });
 	});
 });
-
 
 module.exports = router;

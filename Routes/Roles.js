@@ -1,9 +1,10 @@
 const router = require('express').Router();
 const pg = require("../DB");
 const { v4 } = require('uuid');
+const { checkTokenAdmin, checkToken } = require('../Middleware/CheckToken');
 
 // create new role
-router.post("/", async (req, res) => {
+router.post("/", checkTokenAdmin, async (req, res) => {
 	const query = "INSERT INTO roles VALUES ($1, $2, $3, $4) RETURNING *";
 	try {
 		pg.query(query, [v4(), req.body.description, new Date().toISOString(), new Date().toISOString()], (err, result) => {
@@ -17,7 +18,7 @@ router.post("/", async (req, res) => {
 });
 
 // get all roles
-router.get("/", async (req, res) => {
+router.get("/", checkToken, async (req, res) => {
 	const query = "SELECT * FROM roles";
 	try {
 		pg.query(query, (err, result) => {
@@ -31,7 +32,7 @@ router.get("/", async (req, res) => {
 });
 
 // get specific role
-router.get("/:id", async (req, res) => {
+router.get("/:id", checkToken, async (req, res) => {
 	const { id } = req.params;
 	const query = "SELECT * FROM roles WHERE role_id = $1";
 	try {
@@ -45,7 +46,7 @@ router.get("/:id", async (req, res) => {
 	}
 });
 
-router.put("/update/:id", async (req, res) => {
+router.put("/update/:id", checkTokenAdmin, async (req, res) => {
 	const { id } = req.params;
 	const { description } = req.body;
 	const query = "UPDATE roles SET description = $1, modified_at = NOW()::TIMESTAMP WHERE role_id = $2";
@@ -60,7 +61,7 @@ router.put("/update/:id", async (req, res) => {
 	}
 });
 
-router.delete("/delete/:id", async (req, res) => {
+router.delete("/delete/:id", checkTokenAdmin, async (req, res) => {
 	const { id } = req.params;
 	const query = "DELETE FROM roles WHERE role_id = $1";
 	try {
